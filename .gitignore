@@ -1,0 +1,5 @@
+venv/
+__pystache__/
+*.pyc
+.idea/
+.vscode/
