@@ -68,9 +68,12 @@ def save_application(
         "Новая"
     ))
 
+    application_id = cursor.lastrowid
+
     conn.commit()
     conn.close()
 
+    return application_id
 
 def get_applications():
 

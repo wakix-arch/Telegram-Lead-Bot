@@ -39,7 +39,6 @@ from datetime import datetime
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-
 ADMIN_ID = 997497221
 
 NAME, PHONE, SERVICE, DESCRIPTION = range(4)
@@ -66,10 +65,7 @@ reply_markup = ReplyKeyboardMarkup(
 # START
 # =========================
 
-async def start(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data.clear()
 
@@ -86,10 +82,7 @@ async def start(
 # УСЛУГА
 # =========================
 
-async def get_service(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
+async def get_service(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data["service"] = update.message.text.strip()
 
@@ -106,10 +99,7 @@ async def get_service(
 # ИМЯ
 # =========================
 
-async def get_name(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
+async def get_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data["name"] = update.message.text.strip()
 
@@ -124,10 +114,7 @@ async def get_name(
 # ТЕЛЕФОН
 # =========================
 
-async def get_phone(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
+async def get_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     phone = update.message.text.strip()
 
@@ -157,14 +144,11 @@ async def get_phone(
 # ОПИСАНИЕ
 # =========================
 
-async def get_description(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
+async def get_description(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data["description"] = update.message.text.strip()
 
-    confirm_keyboard = [
+    keyboard = [
         [
             InlineKeyboardButton(
                 "✅ Отправить",
@@ -177,36 +161,27 @@ async def get_description(
         ]
     ]
 
-    confirm_markup = InlineKeyboardMarkup(
-        confirm_keyboard
-    )
+    markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(
         "📋 <b>Проверьте данные заявки</b>\n\n"
 
-        f"👤 <b>Имя:</b> "
-        f"{context.user_data['name']}\n"
-
-        f"📞 <b>Телефон:</b> "
-        f"{context.user_data['phone']}\n"
-
-        f"💼 <b>Услуга:</b> "
-        f"{context.user_data['service']}\n"
-
-        f"📝 <b>Задача:</b> "
-        f"{context.user_data['description']}\n\n"
+        f"👤 <b>Имя:</b> {context.user_data['name']}\n"
+        f"📞 <b>Телефон:</b> {context.user_data['phone']}\n"
+        f"💼 <b>Услуга:</b> {context.user_data['service']}\n"
+        f"📝 <b>Задача:</b> {context.user_data['description']}\n\n"
 
         "Всё верно?",
 
         parse_mode="HTML",
-        reply_markup=confirm_markup
+        reply_markup=markup
     )
 
     return DESCRIPTION
 
 
 # =========================
-# ПОДТВЕРЖДЕНИЕ
+# ПОДТВЕРЖДЕНИЕ ЗАЯВКИ
 # =========================
 
 async def confirm_application(
@@ -218,9 +193,9 @@ async def confirm_application(
 
     await query.answer()
 
-    # -------------------------
+    # =====================
     # ЗАПОЛНИТЬ ЗАНОВО
-    # -------------------------
+    # =====================
 
     if query.data == "restart":
 
@@ -237,9 +212,9 @@ async def confirm_application(
 
         return SERVICE
 
-    # -------------------------
+    # =====================
     # ОТПРАВИТЬ
-    # -------------------------
+    # =====================
 
     if query.data == "confirm":
 
@@ -247,68 +222,64 @@ async def confirm_application(
             "%d.%m.%Y %H:%M"
         )
 
-        context.user_data["date"] = date
-
-        save_application(
+        # Сохраняем заявку и получаем её ID
+        application_id = save_application(
             date,
             context.user_data["name"],
             context.user_data["phone"],
             context.user_data["service"],
             context.user_data["description"]
         )
+
         phone = context.user_data["phone"].replace("+", "")
-        
+
+        # Сохраняем ID в user_data
+        context.user_data["application_id"] = application_id
+
+        # =====================
+        # КНОПКИ АДМИНА
+        # =====================
+
         keyboard = [
-    [
-        InlineKeyboardButton(
-            "🟢 WhatsApp",
-            url=f"https://wa.me/{phone}"
-        ),
-        InlineKeyboardButton(
-            "📄 Создать КП",
-            callback_data="create_kp"
-        )
-    ],
-    [
-        InlineKeyboardButton(
-            "📌 В работу",
-            callback_data="to_work"
-        ),
-        InlineKeyboardButton(
-            "✅ Завершена",
-            callback_data="to_done"
-        )
-    ],
-    [
-        InlineKeyboardButton(
-            "❌ Отказ",
-            callback_data="to_cancel"
-        ),
-        InlineKeyboardButton(
-            "👤 Клиент",
-            callback_data="client_card"
-        )
-    ]
-]
-        InlineKeyboardButton(
-                    "✅ Завершена",
-                    callback_data="to_done"
+            [
+                InlineKeyboardButton(
+                    "🟢 WhatsApp",
+                    url=f"https://wa.me/{phone}"
+                ),
+                InlineKeyboardButton(
+                    "📄 Создать КП",
+                    callback_data="create_kp"
                 )
-    [
-            InlineKeyboardButton(
+            ],
+            [
+                InlineKeyboardButton(
+                    "📌 В работу",
+                    callback_data=f"status_{application_id}_В работе"
+                ),
+                InlineKeyboardButton(
+                    "✅ Завершена",
+                    callback_data=f"status_{application_id}_Завершена"
+                )
+            ],
+            [
+                InlineKeyboardButton(
                     "❌ Отказ",
-                    callback_data="to_cancel"
+                    callback_data=f"status_{application_id}_Отказ"
                 ),
                 InlineKeyboardButton(
                     "👤 Клиент",
-                    callback_data="client_card"
+                    callback_data=f"client_{application_id}"
                 )
-    ]
-    
+            ]
+        ]
 
-    markup = InlineKeyboardMarkup(keyboard)
+        markup = InlineKeyboardMarkup(keyboard)
 
-    await context.bot.send_message(
+        # =====================
+        # ОТПРАВКА АДМИНУ
+        # =====================
+
+        await context.bot.send_message(
 
             chat_id=ADMIN_ID,
 
@@ -317,20 +288,13 @@ async def confirm_application(
                 "📥 <b>НОВАЯ ЗАЯВКА</b>\n"
                 "━━━━━━━━━━━━━━━━━━━━━━\n\n"
 
-                f"👤 <b>Клиент:</b> "
-                f"{context.user_data['name']}\n"
-
-                f"📞 <b>Телефон:</b> "
-                f"{context.user_data['phone']}\n"
-
-                f"💼 <b>Услуга:</b> "
-                f"{context.user_data['service']}\n"
-
-                f"📝 <b>Задача:</b> "
-                f"{context.user_data['description']}\n"
-
-                f"🕒 <b>Дата:</b> "
-                f"{date}\n"
+                f"🆔 <b>Заявка №:</b> {application_id}\n"
+                f"👤 <b>Клиент:</b> {context.user_data['name']}\n"
+                f"📞 <b>Телефон:</b> {context.user_data['phone']}\n"
+                f"💼 <b>Услуга:</b> {context.user_data['service']}\n"
+                f"📝 <b>Задача:</b> {context.user_data['description']}\n"
+                f"🕒 <b>Дата:</b> {date}\n"
+                f"📊 <b>Статус:</b> Новая\n\n"
 
                 "━━━━━━━━━━━━━━━━━━━━━━"
             ),
@@ -339,130 +303,199 @@ async def confirm_application(
             reply_markup=markup
         )
 
-    await query.message.edit_text(
+        await query.message.edit_text(
             "✅ <b>Заявка успешно отправлена!</b>\n\n"
             "Спасибо! Мы свяжемся с вами "
             "в ближайшее время.",
             parse_mode="HTML"
         )
-    context.user_data.clear()
-    return ConversationHandler.END
+
+        context.user_data.clear()
+
+        return ConversationHandler.END
 
 
 # =========================
-# ОТМЕНА
+# ИЗМЕНЕНИЕ СТАТУСА
 # =========================
 
-async def cancel(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    context.user_data.clear()
-
-    await update.message.reply_text(
-        "Заявка отменена.\n\n"
-        "Если захотите начать заново, "
-        "используйте команду /start."
-    )
-
-    return ConversationHandler.END
-
-
-# =========================
-# CHAT ID
-# =========================
-
-async def id(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-
-    await update.message.reply_text(
-        f"Ваш Chat ID: {update.effective_chat.id}"
-    )
-
-async def filter_applications(
+async def change_status(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ):
 
     query = update.callback_query
 
+    if query.from_user.id != ADMIN_ID:
+
+        await query.answer(
+            "⛔ Нет доступа.",
+            show_alert=True
+        )
+
+        return
+
     await query.answer()
 
-    if query.from_user.id != ADMIN_ID:
-        return
+    parts = query.data.split("_", 2)
+
+    application_id = int(parts[1])
+    new_status = parts[2]
+
+    update_status(
+        application_id,
+        new_status
+    )
 
     applications = get_applications()
 
-    status_map = {
-        "filter_new": "Новая",
-        "filter_work": "В работе",
-        "filter_done": "Завершена",
-        "filter_reject": "Отказ"
-    }
+    application = None
 
-    selected_status = status_map.get(query.data)
+    for item in applications:
 
-    filtered = [
-        app for app in applications
-        if app[6] == selected_status
+        if item[0] == application_id:
+            application = item
+            break
+
+    if application is None:
+
+        await query.message.edit_text(
+            "❌ Заявка не найдена."
+        )
+
+        return
+
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "🟢 WhatsApp",
+                url=f"https://wa.me/{application[3].replace('+', '')}"
+            ),
+            InlineKeyboardButton(
+                "📄 Создать КП",
+                callback_data="create_kp"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "📌 В работу",
+                callback_data=f"status_{application_id}_В работе"
+            ),
+            InlineKeyboardButton(
+                "✅ Завершена",
+                callback_data=f"status_{application_id}_Завершена"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "❌ Отказ",
+                callback_data=f"status_{application_id}_Отказ"
+            ),
+            InlineKeyboardButton(
+                "👤 Клиент",
+                callback_data=f"client_{application_id}"
+            )
+        ]
     ]
 
-    if not filtered:
-        await query.message.edit_text(
-            f"📭 Заявок со статусом «{selected_status}» нет."
+    markup = InlineKeyboardMarkup(keyboard)
+
+    await query.edit_message_text(
+
+        f"📌 <b>Заявка №{application[0]}</b>\n\n"
+
+        f"🕒 <b>Дата:</b> {application[1]}\n"
+        f"👤 <b>Клиент:</b> {application[2]}\n"
+        f"📞 <b>Телефон:</b> {application[3]}\n"
+        f"💼 <b>Услуга:</b> {application[4]}\n"
+        f"📝 <b>Задача:</b> {application[5]}\n"
+        f"📊 <b>Статус:</b> {application[6]}",
+
+        parse_mode="HTML",
+        reply_markup=markup
+    )
+
+
+# =========================
+# СОЗДАТЬ КП
+# =========================
+
+async def create_kp(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    query = update.callback_query
+
+    if query.from_user.id != ADMIN_ID:
+        await query.answer(
+            "⛔ Нет доступа.",
+            show_alert=True
         )
         return
 
-    await query.message.edit_text(
-        f"📋 <b>{selected_status.upper()}</b>\n\n"
-        f"Найдено заявок: <b>{len(filtered)}</b>",
+    await query.answer()
+
+    await query.message.reply_text(
+        "🚧 Генерация коммерческого предложения "
+        "скоро будет доступна."
+    )
+
+
+# =========================
+# КЛИЕНТ
+# =========================
+
+async def client_card(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    query = update.callback_query
+
+    if query.from_user.id != ADMIN_ID:
+        await query.answer(
+            "⛔ Нет доступа.",
+            show_alert=True
+        )
+        return
+
+    await query.answer()
+
+    application_id = int(
+        query.data.split("_")[1]
+    )
+
+    applications = get_applications()
+
+    application = None
+
+    for item in applications:
+
+        if item[0] == application_id:
+            application = item
+            break
+
+    if application is None:
+        await query.message.reply_text(
+            "❌ Клиент не найден."
+        )
+        return
+
+    await query.message.reply_text(
+
+        "👤 <b>КАРТОЧКА КЛИЕНТА</b>\n\n"
+
+        f"🆔 Заявка: <b>№{application[0]}</b>\n"
+        f"👤 Имя: <b>{application[2]}</b>\n"
+        f"📞 Телефон: <b>{application[3]}</b>\n"
+        f"💼 Услуга: <b>{application[4]}</b>\n"
+        f"📝 Задача: <b>{application[5]}</b>\n"
+        f"📊 Статус: <b>{application[6]}</b>",
+
         parse_mode="HTML"
     )
 
-    for app in filtered:
-
-        application_id = app[0]
-
-        keyboard = [
-            [
-                InlineKeyboardButton(
-                    "🔄 В работу",
-                    callback_data=f"status_{application_id}_В работе"
-                ),
-                InlineKeyboardButton(
-                    "✅ Завершить",
-                    callback_data=f"status_{application_id}_Завершена"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    "❌ Отказать",
-                    callback_data=f"status_{application_id}_Отказ"
-                )
-            ]
-        ]
-
-        markup = InlineKeyboardMarkup(keyboard)
-
-        await context.bot.send_message(
-            chat_id=ADMIN_ID,
-
-            text=(
-                f"📌 <b>Заявка №{app[0]}</b>\n\n"
-                f"🕒 <b>Дата:</b> {app[1]}\n"
-                f"👤 <b>Клиент:</b> {app[2]}\n"
-                f"📞 <b>Телефон:</b> {app[3]}\n"
-                f"💼 <b>Услуга:</b> {app[4]}\n"
-                f"📝 <b>Задача:</b> {app[5]}\n"
-                f"📊 <b>Статус:</b> {app[6]}"
-            ),
-
-            parse_mode="HTML",
-            reply_markup=markup
-        )
 
 # =========================
 # ПОКАЗ ЗАЯВОК
@@ -474,23 +507,42 @@ async def show_applications(
 ):
 
     if update.effective_chat.id != ADMIN_ID:
+
         await update.message.reply_text(
             "⛔ У вас нет доступа."
         )
+
         return
 
     applications = get_applications()
 
     if not applications:
+
         await update.message.reply_text(
             "📭 Заявок пока нет."
         )
+
         return
 
-    new_count = sum(1 for app in applications if app[6] == "Новая")
-    work_count = sum(1 for app in applications if app[6] == "В работе")
-    done_count = sum(1 for app in applications if app[6] == "Завершена")
-    reject_count = sum(1 for app in applications if app[6] == "Отказ")
+    new_count = sum(
+        1 for app in applications
+        if app[6] == "Новая"
+    )
+
+    work_count = sum(
+        1 for app in applications
+        if app[6] == "В работе"
+    )
+
+    done_count = sum(
+        1 for app in applications
+        if app[6] == "Завершена"
+    )
+
+    reject_count = sum(
+        1 for app in applications
+        if app[6] == "Отказ"
+    )
 
     keyboard = [
         [
@@ -528,44 +580,26 @@ async def show_applications(
     markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(
+
         "📋 <b>АДМИН-ПАНЕЛЬ</b>\n\n"
+
         f"🆕 Новые: <b>{new_count}</b>\n"
         f"🔄 В работе: <b>{work_count}</b>\n"
         f"✅ Завершены: <b>{done_count}</b>\n"
         f"❌ Отказы: <b>{reject_count}</b>\n\n"
+
         "Выберите раздел:",
+
         parse_mode="HTML",
         reply_markup=markup
     )
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "ℹ️ <b>Помощь</b>\n\n"
-        "/start — создать заявку\n"
-        "/applications — посмотреть заявки\n"
-        "/export — выгрузить заявки в Excel\n"
-        "/cancel — отменить заполнение",
-        parse_mode="HTML"
-    )
-
-
-async def error_handler(update, context):
-    print(f"Ошибка: {context.error}")
-
-    if update and update.effective_chat:
-        try:
-            await context.bot.send_message(
-                chat_id=update.effective_chat.id,
-                text="⚠️ Произошла техническая ошибка. Попробуйте ещё раз."
-            )
-        except Exception:
-            pass
 
 # =========================
-# ИЗМЕНЕНИЕ СТАТУСА
+# ФИЛЬТР ЗАЯВОК
 # =========================
 
-async def change_status(
+async def filter_applications(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
 ):
@@ -573,127 +607,112 @@ async def change_status(
     query = update.callback_query
 
     if query.from_user.id != ADMIN_ID:
-
         await query.answer(
             "⛔ Нет доступа.",
             show_alert=True
         )
-
         return
 
     await query.answer()
 
-    parts = query.data.split(
-        "_",
-        2
-    )
-
-    application_id = int(parts[1])
-
-    new_status = parts[2]
-
-    update_status(
-        application_id,
-        new_status
-    )
-
     applications = get_applications()
 
-    application = None
+    status_map = {
+        "filter_new": "Новая",
+        "filter_work": "В работе",
+        "filter_done": "Завершена",
+        "filter_reject": "Отказ"
+    }
 
-    for item in applications:
+    selected_status = status_map.get(query.data)
 
-        if item[0] == application_id:
-
-            application = item
-
-            break
-
-    if application is None:
-
-        await query.message.edit_text(
-            "❌ Заявка не найдена."
-        )
-        async def create_kp(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-          query = update.callback_query
-
-    await query.answer()
-
-    await query.message.reply_text(
-        "🚧 Генерация коммерческого предложения скоро будет доступна."
-    )
-
-    return
-
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                "🔄 В работе",
-                callback_data=(
-                    f"status_{application_id}_В работе"
-                )
-            ),
-
-            InlineKeyboardButton(
-                "✅ Завершена",
-                callback_data=(
-                    f"status_{application_id}_Завершена"
-                )
-            )
-        ],
-
-        [
-            InlineKeyboardButton(
-                "❌ Отказ",
-                callback_data=(
-                    f"status_{application_id}_Отказ"
-                )
-            )
-        ]
+    filtered = [
+        app for app in applications
+        if app[6] == selected_status
     ]
 
-    markup = InlineKeyboardMarkup(
-        keyboard
+    if not filtered:
+
+        await query.message.edit_text(
+            f"📭 Заявок со статусом "
+            f"«{selected_status}» нет."
+        )
+
+        return
+
+    await query.message.edit_text(
+
+        f"📋 <b>{selected_status.upper()}</b>\n\n"
+        f"Найдено заявок: <b>{len(filtered)}</b>",
+
+        parse_mode="HTML"
     )
 
-    await query.edit_message_text(
+    for app in filtered:
 
-        f"📌 <b>Заявка №{application[0]}</b>\n\n"
+        application_id = app[0]
 
-        f"🕒 <b>Дата:</b> {application[1]}\n"
+        phone = app[3].replace("+", "")
 
-        f"👤 <b>Клиент:</b> {application[2]}\n"
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "🟢 WhatsApp",
+                    url=f"https://wa.me/{phone}"
+                ),
+                InlineKeyboardButton(
+                    "📄 Создать КП",
+                    callback_data="create_kp"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "📌 В работу",
+                    callback_data=f"status_{application_id}_В работе"
+                ),
+                InlineKeyboardButton(
+                    "✅ Завершена",
+                    callback_data=f"status_{application_id}_Завершена"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "❌ Отказ",
+                    callback_data=f"status_{application_id}_Отказ"
+                ),
+                InlineKeyboardButton(
+                    "👤 Клиент",
+                    callback_data=f"client_{application_id}"
+                )
+            ]
+        ]
 
-        f"📞 <b>Телефон:</b> {application[3]}\n"
+        markup = InlineKeyboardMarkup(keyboard)
 
-        f"💼 <b>Услуга:</b> {application[4]}\n"
+        await context.bot.send_message(
 
-        f"📝 <b>Задача:</b> {application[5]}\n"
+            chat_id=ADMIN_ID,
 
-        f"📊 <b>Статус:</b> {application[6]}",
+            text=(
 
-        parse_mode="HTML",
+                f"📌 <b>Заявка №{app[0]}</b>\n\n"
 
-        reply_markup=markup
-    )
+                f"🕒 <b>Дата:</b> {app[1]}\n"
+                f"👤 <b>Клиент:</b> {app[2]}\n"
+                f"📞 <b>Телефон:</b> {app[3]}\n"
+                f"💼 <b>Услуга:</b> {app[4]}\n"
+                f"📝 <b>Задача:</b> {app[5]}\n"
+                f"📊 <b>Статус:</b> {app[6]}"
 
-async def create_kp(
-    update: Update,
-    context: ContextTypes.DEFAULT_TYPE
-):
-    query = update.callback_query
+            ),
 
-    await query.answer()
+            parse_mode="HTML",
+            reply_markup=markup
+        )
 
-    await query.message.reply_text(
-        "🚧 Генерация коммерческого предложения скоро будет доступна."
-    )
 
 # =========================
-# EXPORT В EXCEL
+# ЭКСПОРТ
 # =========================
 
 async def export(
@@ -730,6 +749,94 @@ async def export(
 
 
 # =========================
+# CHAT ID
+# =========================
+
+async def id_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    await update.message.reply_text(
+        f"Ваш Chat ID: "
+        f"{update.effective_chat.id}"
+    )
+
+
+# =========================
+# HELP
+# =========================
+
+async def help_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    await update.message.reply_text(
+
+        "ℹ️ <b>Помощь</b>\n\n"
+
+        "/start — создать заявку\n"
+        "/applications — посмотреть заявки\n"
+        "/export — выгрузить заявки в Excel\n"
+        "/cancel — отменить заполнение",
+
+        parse_mode="HTML"
+    )
+
+
+# =========================
+# ОТМЕНА
+# =========================
+
+async def cancel(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    context.user_data.clear()
+
+    await update.message.reply_text(
+        "Заявка отменена.\n\n"
+        "Если захотите начать заново, "
+        "используйте команду /start."
+    )
+
+    return ConversationHandler.END
+
+
+# =========================
+# ОШИБКИ
+# =========================
+
+async def error_handler(
+    update,
+    context
+):
+
+    print(
+        f"Ошибка: {context.error}"
+    )
+
+    if update and update.effective_chat:
+
+        try:
+
+            await context.bot.send_message(
+
+                chat_id=update.effective_chat.id,
+
+                text=(
+                    "⚠️ Произошла техническая ошибка.\n"
+                    "Попробуйте ещё раз."
+                )
+            )
+
+        except Exception:
+            pass
+
+
+# =========================
 # ИНИЦИАЛИЗАЦИЯ БАЗЫ
 # =========================
 
@@ -737,7 +844,7 @@ init_db()
 
 
 # =========================
-# СОЗДАНИЕ ПРИЛОЖЕНИЯ
+# APPLICATION
 # =========================
 
 app = Application.builder().token(
@@ -748,14 +855,6 @@ app = Application.builder().token(
 # =========================
 # CONVERSATION
 # =========================
-
-entry_points = [
-    CommandHandler(
-        "start",
-        start
-    )
-]
-
 
 states = {
 
@@ -795,21 +894,23 @@ states = {
 }
 
 
-fallbacks = [
-    CommandHandler(
-        "cancel",
-        cancel
-    )
-]
-
-
 conv_handler = ConversationHandler(
 
-    entry_points=entry_points,
+    entry_points=[
+        CommandHandler(
+            "start",
+            start
+        )
+    ],
 
     states=states,
 
-    fallbacks=fallbacks
+    fallbacks=[
+        CommandHandler(
+            "cancel",
+            cancel
+        )
+    ]
 )
 
 
@@ -819,7 +920,7 @@ app.add_handler(
 
 
 # =========================
-# ADMIN COMMANDS
+# ADMIN HANDLERS
 # =========================
 
 app.add_handler(
@@ -830,12 +931,37 @@ app.add_handler(
 )
 
 app.add_handler(
+    CommandHandler(
+        "export",
+        export
+    )
+)
+
+app.add_handler(
+    CommandHandler(
+        "id",
+        id_command
+    )
+)
+
+app.add_handler(
+    CommandHandler(
+        "help",
+        help_command
+    )
+)
+
+
+# Фильтры
+app.add_handler(
     CallbackQueryHandler(
         filter_applications,
         pattern=r"^filter_(new|work|done|reject)$"
     )
 )
 
+
+# Статусы
 app.add_handler(
     CallbackQueryHandler(
         change_status,
@@ -843,21 +969,29 @@ app.add_handler(
     )
 )
 
+
+# Создать КП
 app.add_handler(
-    CommandHandler(
-        "id",
-        id
+    CallbackQueryHandler(
+        create_kp,
+        pattern=r"^create_kp$"
     )
 )
 
+
+# Клиент
 app.add_handler(
-    CommandHandler(
-        "export",
-        export
+    CallbackQueryHandler(
+        client_card,
+        pattern=r"^client_\d+$"
     )
 )
 
-app.add_error_handler(error_handler)
+
+# Ошибки
+app.add_error_handler(
+    error_handler
+)
 
 
 # =========================
@@ -866,15 +1000,4 @@ app.add_error_handler(error_handler)
 
 print("Бот запущен...")
 
-app.add_handler(
-    CommandHandler("help", help_command)
-)
-
-
-app.add_handler(
-    CallbackQueryHandler(
-        create_kp,
-        pattern="^create_kp$"
-    )
-)
 app.run_polling()
