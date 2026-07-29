@@ -16,6 +16,8 @@ from telegram.ext import (
     ConversationHandler
 )
 
+from database import clear_applications
+
 from dotenv import load_dotenv
 
 from database import (
@@ -318,6 +320,16 @@ async def cancel(
 
     return ConversationHandler.END
 
+async def clear_db(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_chat.id != ADMIN_ID:
+        await update.message.reply_text("⛔ У вас нет доступа.")
+        return
+
+    clear_applications()
+
+    await update.message.reply_text(
+        "🗑 Все заявки удалены."
+    )
 
 # =========================
 # CHAT ID
@@ -797,5 +809,7 @@ print("Бот запущен...")
 app.add_handler(
     CommandHandler("help", help_command)
 )
+
+app.add_handler(CommandHandler("clear", clear_db))
 
 app.run_polling()

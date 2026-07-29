@@ -120,3 +120,12 @@ def update_status(
 
     conn.commit()
     conn.close()
+
+def clear_applications():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM applications")
+
+    conn.commit()
+    conn.close()
