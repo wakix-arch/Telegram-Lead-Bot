@@ -32,6 +32,9 @@ import re
 import os
 from datetime import datetime
 
+from flask import Flask
+import threading
+
 
 # =========================
 # НАСТРОЙКИ
@@ -1021,6 +1024,28 @@ app.add_error_handler(
 # =========================
 # ЗАПУСК
 # =========================
+
+# =========================
+# RENDER WEB SERVER
+# =========================
+
+flask_app = Flask(__name__)
+
+@flask_app.route("/")
+def home():
+    return "Bot is running!"
+
+def run_flask():
+    port = int(os.environ.get("PORT", 10000))
+    flask_app.run(
+        host="0.0.0.0",
+        port=port
+    )
+
+threading.Thread(
+    target=run_flask,
+    daemon=True
+).start()
 
 print("Бот запущен...")
 
