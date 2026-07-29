@@ -22,7 +22,8 @@ from database import (
     init_db,
     save_application,
     get_applications,
-    update_status
+    update_status,
+    clear_applications,
 )
 
 from excel import export_to_excel
@@ -747,6 +748,23 @@ async def export(
         caption="📊 Все заявки"
     )
 
+async def clear_command(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    if update.effective_chat.id != ADMIN_ID:
+        await update.message.reply_text(
+            "⛔ У вас нет доступа."
+        )
+        return
+
+    clear_applications()
+
+    await update.message.reply_text(
+        "🗑 Все заявки удалены."
+    )
+
 
 # =========================
 # CHAT ID
@@ -851,6 +869,12 @@ app = Application.builder().token(
     BOT_TOKEN
 ).build()
 
+app.add_handler(
+    CommandHandler(
+        "clear",
+        clear_command
+    )
+)
 
 # =========================
 # CONVERSATION
