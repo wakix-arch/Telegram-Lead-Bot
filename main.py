@@ -256,8 +256,59 @@ async def confirm_application(
             context.user_data["service"],
             context.user_data["description"]
         )
+        phone = context.user_data["phone"].replace("+", "")
+        
+        keyboard = [
+    [
+        InlineKeyboardButton(
+            "🟢 WhatsApp",
+            url=f"https://wa.me/{phone}"
+        ),
+        InlineKeyboardButton(
+            "📄 Создать КП",
+            callback_data="create_kp"
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            "📌 В работу",
+            callback_data="to_work"
+        ),
+        InlineKeyboardButton(
+            "✅ Завершена",
+            callback_data="to_done"
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            "❌ Отказ",
+            callback_data="to_cancel"
+        ),
+        InlineKeyboardButton(
+            "👤 Клиент",
+            callback_data="client_card"
+        )
+    ]
+]
+        InlineKeyboardButton(
+                    "✅ Завершена",
+                    callback_data="to_done"
+                )
+    [
+            InlineKeyboardButton(
+                    "❌ Отказ",
+                    callback_data="to_cancel"
+                ),
+                InlineKeyboardButton(
+                    "👤 Клиент",
+                    callback_data="client_card"
+                )
+    ]
+    
 
-        await context.bot.send_message(
+    markup = InlineKeyboardMarkup(keyboard)
+
+    await context.bot.send_message(
 
             chat_id=ADMIN_ID,
 
@@ -284,19 +335,18 @@ async def confirm_application(
                 "━━━━━━━━━━━━━━━━━━━━━━"
             ),
 
-            parse_mode="HTML"
+            parse_mode="HTML",
+            reply_markup=markup
         )
 
-        await query.message.edit_text(
+    await query.message.edit_text(
             "✅ <b>Заявка успешно отправлена!</b>\n\n"
             "Спасибо! Мы свяжемся с вами "
             "в ближайшее время.",
             parse_mode="HTML"
         )
-
-        context.user_data.clear()
-
-        return ConversationHandler.END
+    context.user_data.clear()
+    return ConversationHandler.END
 
 
 # =========================
@@ -564,8 +614,19 @@ async def change_status(
         await query.message.edit_text(
             "❌ Заявка не найдена."
         )
+        async def create_kp(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+          query = update.callback_query
 
-        return
+    await query.answer()
+
+    await query.message.reply_text(
+        "🚧 Генерация коммерческого предложения скоро будет доступна."
+    )
+
+    return
 
     keyboard = [
         [
@@ -619,6 +680,17 @@ async def change_status(
         reply_markup=markup
     )
 
+async def create_kp(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    query = update.callback_query
+
+    await query.answer()
+
+    await query.message.reply_text(
+        "🚧 Генерация коммерческого предложения скоро будет доступна."
+    )
 
 # =========================
 # EXPORT В EXCEL
@@ -798,4 +870,11 @@ app.add_handler(
     CommandHandler("help", help_command)
 )
 
+
+app.add_handler(
+    CallbackQueryHandler(
+        create_kp,
+        pattern="^create_kp$"
+    )
+)
 app.run_polling()
