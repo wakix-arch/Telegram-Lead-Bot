@@ -130,5 +130,9 @@ def clear_applications():
 
     cursor.execute("DELETE FROM applications")
 
+    cursor.execute(
+        "DELETE FROM sqlite_sequence WHERE name='applications'"
+    )
+
     conn.commit()
     conn.close()

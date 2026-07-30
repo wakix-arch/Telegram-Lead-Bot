@@ -1049,4 +1049,8 @@ threading.Thread(
 
 print("Бот запущен...")
 
-app.run_polling()
+print("Старт polling...")
+
+app.run_polling(
+    drop_pending_updates=True
+)
