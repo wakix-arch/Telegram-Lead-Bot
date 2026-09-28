@@ -1,5 +1,11 @@
+.env
+*.db
+*.sqlite3
+*.xlsx
+*.xls
+__pycache__/
+*.py[cod]
 venv/
-__pystache__/
-*.pyc
-.idea/
+.venv/
 .vscode/
+.idea/

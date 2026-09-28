@@ -1,4 +1,4 @@
-python-telegram-bot
-openpyxl
+python-telegram-bot>=20.0
 python-dotenv
 flask
+openpyxl

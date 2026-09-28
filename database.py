@@ -36,18 +36,13 @@ def init_db():
     conn.close()
 
 
-def save_application(
-    date,
-    name,
-    phone,
-    service,
-    description
-):
+def save_application(date, name, phone, service, description):
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         INSERT INTO applications
         (
             date,
@@ -59,14 +54,9 @@ def save_application(
         )
 
         VALUES (?, ?, ?, ?, ?, ?)
-    """, (
-        date,
-        name,
-        phone,
-        service,
-        description,
-        "Новая"
-    ))
+    """,
+        (date, name, phone, service, description, "Новая"),
+    )
 
     application_id = cursor.lastrowid
 
@@ -74,6 +64,7 @@ def save_application(
     conn.close()
 
     return application_id
+
 
 def get_applications():
 
@@ -102,27 +93,25 @@ def get_applications():
     return applications
 
 
-def update_status(
-    application_id,
-    new_status
-):
+def update_status(application_id, new_status):
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         UPDATE applications
 
         SET status = ?
 
         WHERE id = ?
-    """, (
-        new_status,
-        application_id
-    ))
+    """,
+        (new_status, application_id),
+    )
 
     conn.commit()
     conn.close()
+
 
 def clear_applications():
     conn = get_connection()
@@ -130,9 +119,7 @@ def clear_applications():
 
     cursor.execute("DELETE FROM applications")
 
-    cursor.execute(
-        "DELETE FROM sqlite_sequence WHERE name='applications'"
-    )
+    cursor.execute("DELETE FROM sqlite_sequence WHERE name='applications'")
 
     conn.commit()
     conn.close()
