@@ -42,7 +42,7 @@ import threading
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_ID = 997497221
+ADMIN_ID = os.getenv("CHAT_ID")
 
 NAME, PHONE, SERVICE, DESCRIPTION = range(4)
 
